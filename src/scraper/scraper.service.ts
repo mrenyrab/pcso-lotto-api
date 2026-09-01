@@ -30,6 +30,9 @@ export class ScraperService {
     const $ = cheerio.load(html);
     const records: CreateLottoDto[] = [];
 
+    const allRows = $('table tbody tr');
+    this.logger.log(`📊 Found ${allRows.length} total rows`);
+
     $('table tbody tr').each((_, row) => {
       const cols = $(row).find('td');
       if (cols.length >= 4) {
@@ -142,7 +145,7 @@ export class ScraperService {
 
           // Populate end date
           setSelectValue('endmonth', eMonth);
-          setSelectValue('enddate', eDay.toString());
+          setSelectValue('endday', eDay.toString());
           setSelectValue('endyear', eYear.toString());
         },
         startMonth,
