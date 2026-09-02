@@ -18,7 +18,7 @@ export class ScraperController {
     return this.scraperService.backfill2026();
   }
 
-  @Post('sync-today')
+  @Post('run')
   async triggerDailySync() {
     await this.scraperService.handleDailyScrape();
     return { message: 'Sync triggered successfully.' };

@@ -17,4 +17,15 @@ export class StatsController {
       months ? parseInt(months, 10) : undefined,
     );
   }
+
+  @Get('overdue/:game')
+  async getOverdueNumbers(
+    @Param('game') game: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.statsService.getOverdueNumbers(
+      game,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
 }

@@ -8,4 +8,8 @@ export class StatsService {
   async getFrequency(gameName: string, limit: number = 10, months?: number) {
     return this.statsRepository.getFrequency(gameName, limit, months);
   }
+
+  async getOverdueNumbers(gameName: string, limit: number = 10) {
+    return this.statsRepository.getOverdueNumbers(gameName, limit);
+  }
 }
