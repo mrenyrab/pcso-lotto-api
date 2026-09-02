@@ -85,4 +85,24 @@ export class StatsController {
       to ? new Date(to) : undefined,
     );
   }
+
+  @Get('generate/:game')
+  async generateNumbers(
+    @Param('game') game: string,
+    @Query('count') count?: string,
+    @Query('type') type: 'smart' | 'random' = 'smart',
+  ) {
+    const totalPicks = count ? parseInt(count, 10) : 3;
+
+    if (type === 'random') {
+      return {
+        game,
+        combinations: Array.from({ length: totalPicks }, () =>
+          this.statsService.generateQuickPick(game),
+        ),
+      };
+    }
+
+    return this.statsService.generateSmartPicks(game, totalPicks);
+  }
 }
