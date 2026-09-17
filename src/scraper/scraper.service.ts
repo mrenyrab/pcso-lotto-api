@@ -273,11 +273,11 @@ export class ScraperService {
 
   /**
    * Automated Daily Cron Job
-   * Runs daily at 10:30 PM PST to ensure evening draw results are fully published.
+   * Runs daily at 09:45 PM PST to ensure evening draw results are fully published.
    */
-  @Cron('25 22 * * *', { timeZone: 'Asia/Manila' })
+  @Cron('45 21 * * *', { timeZone: 'Asia/Manila' })
   async handleDailyScrape(): Promise<void> {
-    this.logger.log('Starting automated daily lotto scrape at 10:30 PM...');
+    this.logger.log('Starting automated daily lotto scrape at 09:45 PM...');
     const now = new Date();
     const month = MONTHS[now.getMonth()];
     const day = now.getDate();

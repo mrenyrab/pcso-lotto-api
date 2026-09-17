@@ -103,14 +103,17 @@ export class LottoRepository {
     const start = new Date(`${date}T00:00:00.000Z`);
     const end = new Date(`${date}T23:59:59.999Z`);
 
-    return this.lottoModel
-      .find({
-        drawDate: {
-          $gte: start,
-          $lt: end,
-        },
-      })
-      .sort({ drawDate: 1 })
-      .exec();
+    return (
+      this.lottoModel
+        .find({
+          drawDate: {
+            $gte: start,
+            $lt: end,
+          },
+        })
+        //.select('-winners') // Exclude winners field in the output
+        .sort({ drawDate: 1 })
+        .exec()
+    );
   }
 }
