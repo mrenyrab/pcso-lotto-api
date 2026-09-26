@@ -14,6 +14,10 @@ export class CreateLottoDto {
   @IsNotEmpty()
   gameName: string;
 
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
   @IsArray()
   @ArrayMinSize(2)
   @IsNumber({}, { each: true })

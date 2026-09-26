@@ -5,6 +5,7 @@ import * as cheerio from 'cheerio';
 import { LottoRepository } from '../lotto/lotto.repository.js';
 import { CreateLottoDto } from '../lotto/dto/create-lotto.dto.js';
 import { MONTHS } from '../contants/months.constants.js';
+import { GameType } from '../contants/game.constants.js';
 
 @Injectable()
 export class ScraperService {
@@ -24,6 +25,13 @@ export class ScraperService {
 
     // Use noon UTC so the day does not shift when converted back in local time
     return new Date(Date.UTC(year, month, day, 12, 0, 0, 0));
+  }
+
+  private getGameType(gameName: string): GameType {
+    const name = gameName.trim().toUpperCase();
+
+    if (/^(2D|3D|4D|6D)\b/.test(name)) return GameType.DIGIT;
+    return GameType.LOTTO;
   }
 
   private parseTableHtml(html: string): CreateLottoDto[] {
@@ -54,6 +62,7 @@ export class ScraperService {
             records.push({
               gameName: rawGame,
               numbers,
+              type: this.getGameType(rawGame),
               drawDate: parsedDate,
               jackpot: parseFloat(rawJackpot.replace(/,/g, '')) || 0,
               winners: parseInt(rawWinners.replace(/,/g, ''), 10) || 0,

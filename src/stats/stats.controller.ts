@@ -1,5 +1,13 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { StatsService } from './stats.service.js';
+import { isValidLottoGame } from '../contants/game.constants.js';
+import { StatsQueryDto } from './dto/stats-query.dto.js';
 
 @Controller('stats')
 export class StatsController {
@@ -8,64 +16,80 @@ export class StatsController {
   @Get('frequency/:game')
   async getFrequency(
     @Param('game') game: string,
-    @Query('limit') limit?: string,
-    @Query('months') months?: string,
+    @Query() query: StatsQueryDto,
   ) {
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
     return this.statsService.getFrequency(
       game,
-      limit ? parseInt(limit, 10) : 10,
-      months ? parseInt(months, 10) : undefined,
+      query.limit ?? 10,
+      query.months,
     );
   }
 
   @Get('overdue/:game')
   async getOverdueNumbers(
     @Param('game') game: string,
-    @Query('limit') limit?: string,
+    @Query() query: StatsQueryDto,
   ) {
-    return this.statsService.getOverdueNumbers(
-      game,
-      limit ? parseInt(limit, 10) : 10,
-    );
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
+    return this.statsService.getOverdueNumbers(game, query.limit ?? 10);
   }
 
   @Get('odd-even/:game')
-  async getOddEven(
-    @Param('game') game: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-  ) {
-    const fromDate = from ? new Date(from) : undefined;
-    const toDate = to ? new Date(to) : undefined;
+  async getOddEven(@Param('game') game: string, @Query() query: StatsQueryDto) {
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
+    const fromDate = query.from ? new Date(query.from) : undefined;
+    const toDate = query.to ? new Date(query.to) : undefined;
 
     return this.statsService.getOddEvenDistribution(game, fromDate, toDate);
   }
 
   @Get('pairs/:game')
-  async getPairs(
-    @Param('game') game: string,
-    @Query('limit') limit?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-  ) {
+  async getPairs(@Param('game') game: string, @Query() query: StatsQueryDto) {
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
     return this.statsService.getNumberPairs(
       game,
-      limit ? parseInt(limit, 10) : 15,
-      from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      query.limit ?? 15,
+      query.from ? new Date(query.from) : undefined,
+      query.to ? new Date(query.to) : undefined,
     );
   }
 
   @Get('sum-distribution/:game')
   async getSumDistribution(
     @Param('game') game: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query() query: StatsQueryDto,
   ) {
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
     return this.statsService.getSumDistribution(
       game,
-      from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      query.from ? new Date(query.from) : undefined,
+      query.to ? new Date(query.to) : undefined,
     );
   }
 
@@ -73,28 +97,37 @@ export class StatsController {
   async getCompanions(
     @Param('game') game: string,
     @Param('ball') ball: string,
-    @Query('limit') limit?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
+    @Query() query: StatsQueryDto,
   ) {
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
+
     return this.statsService.getBallCompanions(
       game,
       parseInt(ball, 10),
-      limit ? parseInt(limit, 10) : 10,
-      from ? new Date(from) : undefined,
-      to ? new Date(to) : undefined,
+      query.limit ?? 10,
+      query.from ? new Date(query.from) : undefined,
+      query.to ? new Date(query.to) : undefined,
     );
   }
 
   @Get('generate/:game')
   async generateNumbers(
     @Param('game') game: string,
-    @Query('count') count?: string,
-    @Query('type') type: 'smart' | 'random' = 'smart',
+    @Query() query: StatsQueryDto,
   ) {
-    const totalPicks = count ? parseInt(count, 10) : 3;
+    if (!isValidLottoGame(game)) {
+      throw new BadRequestException(
+        `Invalid game: ${game}. Supported games are: 6/58, 6/55, 6/49, 6/45, 6/42.`,
+      );
+    }
 
-    if (type === 'random') {
+    const totalPicks = query.limit ?? 3;
+
+    if (query.type === 'random') {
       return {
         game,
         combinations: Array.from({ length: totalPicks }, () =>

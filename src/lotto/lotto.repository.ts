@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { LottoDraw, LottoDrawDocument } from './schemas/lotto-draw.schema.js';
 import { AnyBulkWriteOperation, Model } from 'mongoose';
 import { CreateLottoDto } from './dto/create-lotto.dto.js';
+import { GameType } from '../contants/game.constants.js';
 
 @Injectable()
 export class LottoRepository {
@@ -35,6 +36,7 @@ export class LottoRepository {
               numbers: draw.numbers,
               jackpot: draw.jackpot,
               winners: draw.winners,
+              type: draw.type as GameType,
             },
             $setOnInsert: {
               gameName: draw.gameName,

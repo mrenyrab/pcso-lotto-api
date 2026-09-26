@@ -43,3 +43,22 @@ export const GAME_CONFIGS: Record<string, GameConfig> = {
     validOddCounts: [2, 3, 4],
   },
 };
+
+export enum GameType {
+  LOTTO = 'lotto',
+  DIGIT = 'digit',
+}
+
+export const VALID_LOTTO_GAMES = [
+  '6/42',
+  '6/45',
+  '6/49',
+  '6/55',
+  '6/58',
+] as const;
+
+export type GameName = (typeof VALID_LOTTO_GAMES)[number];
+
+export function isValidLottoGame(value: string): value is GameName {
+  return (VALID_LOTTO_GAMES as readonly string[]).includes(value);
+}

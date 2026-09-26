@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { GameType } from '../../contants/game.constants.js';
 
 export type LottoDrawDocument = HydratedDocument<LottoDraw>;
 
@@ -7,6 +8,12 @@ export type LottoDrawDocument = HydratedDocument<LottoDraw>;
 export class LottoDraw {
   @Prop({ required: true, trim: true, index: true })
   gameName: string; // e.g., "Ultra Lotto 6/58"
+
+  @Prop({
+    required: true,
+    enum: GameType,
+  })
+  type: GameType;
 
   @Prop({ required: true, type: [Number] })
   numbers: number[]; // e.g., [4, 18, 22, 35, 41, 53]

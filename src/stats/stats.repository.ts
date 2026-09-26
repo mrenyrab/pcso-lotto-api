@@ -5,6 +5,7 @@ import {
   LottoDrawDocument,
 } from '../lotto/schemas/lotto-draw.schema.js';
 import { Model } from 'mongoose';
+import { GameType } from '../contants/game.constants.js';
 
 @Injectable()
 export class StatsRepository {
@@ -16,13 +17,13 @@ export class StatsRepository {
   async getFrequency(gameName: string, limit: number = 10, months?: number) {
     let dateFrom: Date | undefined;
 
-    // Add date filter if months specified
+    // If months is provided, calculate the date from which to filter draws
     if (months) {
       dateFrom = new Date();
       dateFrom.setMonth(dateFrom.getMonth() - months);
     }
 
-    const matchCriteria: any = {
+    const matchCriteria = {
       gameName: new RegExp(gameName, 'i'),
       ...(dateFrom && { drawDate: { $gte: dateFrom } }),
     };
@@ -153,10 +154,7 @@ export class StatsRepository {
     const matchFilter: Record<string, any> = {
       // Game name filter (e.g. 6/58, Ultra Lotto)
       gameName: new RegExp(gameName, 'i'),
-
-      // Strictly enforce array length of EXACTLY 6
-      'numbers.5': { $exists: true }, // Must have a 6th element (index 5)
-      'numbers.6': { $exists: false }, // Must NOT have a 7th element (index 6)
+      type: GameType.LOTTO, // Only consider 6-ball lotto draws
     };
 
     // If date bounds are provided, add them to the filter
@@ -279,8 +277,7 @@ export class StatsRepository {
   ) {
     const matchFilter: Record<string, any> = {
       gameName: new RegExp(gameName, 'i'),
-      'numbers.5': { $exists: true },
-      'numbers.6': { $exists: false },
+      type: GameType.LOTTO, // Only consider 6-ball lotto draws
     };
 
     if (from || to) {
@@ -360,11 +357,7 @@ export class StatsRepository {
       { $limit: limit },
     ]);
 
-    const totalDraws = await this.lottoModel.countDocuments({
-      gameName: new RegExp(gameName, 'i'),
-      'numbers.5': { $exists: true },
-      'numbers.6': { $exists: false },
-    });
+    const totalDraws = await this.lottoModel.countDocuments(matchFilter);
 
     return {
       gameName,
@@ -379,8 +372,7 @@ export class StatsRepository {
   async getSumDistribution(gameName: string, from?: Date, to?: Date) {
     const matchFilter: Record<string, any> = {
       gameName: new RegExp(gameName, 'i'),
-      'numbers.5': { $exists: true },
-      'numbers.6': { $exists: false },
+      type: GameType.LOTTO, // Only consider 6-ball lotto draws
     };
 
     if (from || to) {
@@ -612,8 +604,7 @@ export class StatsRepository {
   ) {
     const matchFilter: Record<string, any> = {
       gameName: new RegExp(gameName, 'i'),
-      'numbers.5': { $exists: true },
-      'numbers.6': { $exists: false },
+      type: GameType.LOTTO, // Only consider 6-ball lotto draws
       numbers: targetBall, // Multikey match: only draws containing targetBall
     };
 
