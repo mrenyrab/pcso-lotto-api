@@ -208,7 +208,7 @@ export class ScraperService {
   async runBackfillMonthYear(month: string, year: number) {
     const monthName =
       month.charAt(0).toUpperCase() + month.slice(1).toLowerCase();
-    const monthIndex = MONTHS.findIndex(
+    const monthIndex = Object.values(MONTHS).findIndex(
       (m) => m.toLowerCase() === monthName.toLowerCase(),
     );
 
@@ -253,10 +253,11 @@ export class ScraperService {
     const now = new Date();
     const currentMonthIndex =
       now.getFullYear() === targetYear ? now.getMonth() : 11;
+    const monthNames = Object.values(MONTHS);
     let total = 0;
 
     for (let m = 0; m <= currentMonthIndex; m++) {
-      const monthName = MONTHS[m];
+      const monthName = monthNames[m];
       const lastDay = new Date(targetYear, m + 1, 0).getDate();
 
       this.logger.log(`Fetching ${monthName} 1-${lastDay}, ${targetYear}...`);
@@ -288,7 +289,7 @@ export class ScraperService {
   async handleDailyScrape(): Promise<void> {
     this.logger.log('Starting automated daily lotto scrape at 09:45 PM...');
     const now = new Date();
-    const month = MONTHS[now.getMonth()];
+    const month = Object.values(MONTHS)[now.getMonth()];
     const day = now.getDate();
     const year = now.getFullYear();
 

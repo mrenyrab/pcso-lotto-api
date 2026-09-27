@@ -1,14 +1,14 @@
-export const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+export const MONTHS = {
+  JANUARY: 'january',
+  FEBRUARY: 'february',
+  MARCH: 'march',
+  APRIL: 'april',
+  MAY: 'may',
+  JUNE: 'june',
+  JULY: 'july',
+  AUGUST: 'august',
+  SEPTEMBER: 'september',
+  OCTOBER: 'october',
+  NOVEMBER: 'november',
+  DECEMBER: 'december',
+} as const;

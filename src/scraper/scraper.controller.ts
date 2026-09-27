@@ -1,16 +1,14 @@
 import { Controller, Param, Post } from '@nestjs/common';
 import { ScraperService } from './scraper.service.js';
+import { BackfillMonthYearDto } from './dto/backfill-month-year.dto.js';
 
 @Controller('scraper')
 export class ScraperController {
   constructor(private readonly scraperService: ScraperService) {}
 
   @Post('backfill/:month/:year')
-  async runBackfillMonthYear(
-    @Param('month') month: string,
-    @Param('year') year: string,
-  ) {
-    return this.scraperService.runBackfillMonthYear(month, Number(year));
+  async runBackfillMonthYear(@Param() params: BackfillMonthYearDto) {
+    return this.scraperService.runBackfillMonthYear(params.month, params.year);
   }
 
   @Post('backfill-2026')
