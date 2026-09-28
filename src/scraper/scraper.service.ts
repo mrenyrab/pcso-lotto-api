@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import puppeteer, { Browser } from 'puppeteer';
 import * as cheerio from 'cheerio';
@@ -32,6 +32,22 @@ export class ScraperService {
 
     if (/^(2D|3D|4D|6D)\b/.test(name)) return GameType.DIGIT;
     return GameType.LOTTO;
+  }
+
+  private getManilaToday() {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    }).formatToParts(new Date());
+
+    return {
+      year: Number(parts.find((part) => part.type === 'year')?.value),
+      monthIndex:
+        Number(parts.find((part) => part.type === 'month')?.value) - 1,
+      day: Number(parts.find((part) => part.type === 'day')?.value),
+    };
   }
 
   private parseTableHtml(html: string): CreateLottoDto[] {
@@ -213,10 +229,22 @@ export class ScraperService {
     );
 
     if (monthIndex === -1) {
-      throw new Error(`Invalid month: ${month}`);
+      throw new BadRequestException(`Invalid month: ${month}`);
     }
 
-    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const today = this.getManilaToday();
+    if (
+      year > today.year ||
+      (year === today.year && monthIndex > today.monthIndex)
+    ) {
+      throw new BadRequestException('Cannot backfill a future date.');
+    }
+
+    const monthLastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const lastDay =
+      year === today.year && monthIndex === today.monthIndex
+        ? today.day
+        : monthLastDay;
 
     this.logger.log(
       `Scraping ${monthName} 1-${lastDay}, ${year} with Puppeteer...`,
@@ -245,29 +273,84 @@ export class ScraperService {
     };
   }
 
+  /** Backfill a specific day, month, and year. */
+  async runBackfillDayMonthYear(day: number, month: string, year: number) {
+    const monthName =
+      month.charAt(0).toUpperCase() + month.slice(1).toLowerCase();
+    const monthIndex = Object.values(MONTHS).findIndex(
+      (value) => value.toLowerCase() === month.toLowerCase(),
+    );
+
+    if (monthIndex === -1) {
+      throw new BadRequestException(`Invalid month: ${month}`);
+    }
+
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    if (!Number.isInteger(day) || day < 1 || day > lastDay) {
+      throw new BadRequestException('Invalid day for the selected month.');
+    }
+
+    const today = this.getManilaToday();
+    if (
+      year > today.year ||
+      (year === today.year && monthIndex > today.monthIndex) ||
+      (year === today.year &&
+        monthIndex === today.monthIndex &&
+        day > today.day)
+    ) {
+      throw new BadRequestException('Cannot backfill a future date.');
+    }
+
+    const records = await this.fetchWithBrowser(
+      monthName,
+      day,
+      monthName,
+      day,
+      year,
+    );
+    if (records.length === 0) {
+      return { saved: 0, modified: 0, sample: [] };
+    }
+
+    const result = await this.lottoRepository.bulkUpsert(records);
+    return {
+      saved: result.upserted,
+      modified: result.modified,
+      sample: records.slice(0, 3),
+    };
+  }
+
   /**
-   * Backfill Jan 2026 - Present
+   * Backfill January through the current date, or the full year if it has passed.
    */
-  async backfill2026() {
-    const targetYear = 2026;
-    const now = new Date();
-    const currentMonthIndex =
-      now.getFullYear() === targetYear ? now.getMonth() : 11;
+  async backfillYear(year: number) {
+    const today = this.getManilaToday();
+    if (!Number.isInteger(year) || year < 1 || year > today.year) {
+      throw new BadRequestException(
+        'Year must be a valid year up to the current year.',
+      );
+    }
+
     const monthNames = Object.values(MONTHS);
     let total = 0;
+    const lastMonthIndex = year === today.year ? today.monthIndex : 11;
 
-    for (let m = 0; m <= currentMonthIndex; m++) {
-      const monthName = monthNames[m];
-      const lastDay = new Date(targetYear, m + 1, 0).getDate();
+    for (let monthIndex = 0; monthIndex <= lastMonthIndex; monthIndex++) {
+      const monthName = monthNames[monthIndex];
+      const monthLastDay = new Date(year, monthIndex + 1, 0).getDate();
+      const lastDay =
+        year === today.year && monthIndex === today.monthIndex
+          ? today.day
+          : monthLastDay;
 
-      this.logger.log(`Fetching ${monthName} 1-${lastDay}, ${targetYear}...`);
+      this.logger.log(`Fetching ${monthName} 1-${lastDay}, ${year}...`);
       try {
         const records = await this.fetchWithBrowser(
           monthName,
           1,
           monthName,
           lastDay,
-          targetYear,
+          year,
         );
         if (records.length > 0) {
           const res = await this.lottoRepository.bulkUpsert(records);
@@ -279,6 +362,10 @@ export class ScraperService {
     }
 
     return { totalRecordsProcessed: total };
+  }
+
+  async backfill2026() {
+    return this.backfillYear(2026);
   }
 
   /**

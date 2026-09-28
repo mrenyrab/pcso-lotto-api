@@ -1,19 +1,53 @@
-import { Controller, Param, Post } from '@nestjs/common';
+import { BadRequestException, Controller, Post, Query } from '@nestjs/common';
 import { ScraperService } from './scraper.service.js';
-import { BackfillMonthYearDto } from './dto/backfill-month-year.dto.js';
+import { BackfillQueryDto } from './dto/backfill-query.dto.js';
 
 @Controller('scraper')
 export class ScraperController {
   constructor(private readonly scraperService: ScraperService) {}
 
-  @Post('backfill/:month/:year')
-  async runBackfillMonthYear(@Param() params: BackfillMonthYearDto) {
-    return this.scraperService.runBackfillMonthYear(params.month, params.year);
-  }
+  @Post('backfill')
+  async runBackfill(@Query() params: BackfillQueryDto) {
+    if (params.day !== undefined) {
+      if (params.month === undefined && params.year === undefined) {
+        throw new BadRequestException(
+          'Month and year are required when day is provided.',
+        );
+      }
 
-  @Post('backfill-2026')
-  async runBackfill() {
-    return this.scraperService.backfill2026();
+      if (params.month === undefined) {
+        throw new BadRequestException('Day requires both month and year.');
+      }
+
+      if (params.year === undefined) {
+        throw new BadRequestException(
+          'Year is required when day and month are provided.',
+        );
+      }
+
+      return this.scraperService.runBackfillDayMonthYear(
+        params.day,
+        params.month,
+        params.year,
+      );
+    }
+
+    if (params.month !== undefined) {
+      if (params.year === undefined) {
+        throw new BadRequestException('Year is required when month is provided.');
+      }
+
+      return this.scraperService.runBackfillMonthYear(
+        params.month,
+        params.year,
+      );
+    }
+
+    if (params.year === undefined) {
+      throw new BadRequestException('Year is required.');
+    }
+
+    return this.scraperService.backfillYear(params.year);
   }
 
   @Post('run')
