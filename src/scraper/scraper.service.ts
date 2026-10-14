@@ -269,7 +269,7 @@ export class ScraperService {
     return {
       saved: result.upserted,
       modified: result.modified,
-      sample: records.slice(0, 3),
+      // sample: records.slice(0, 3), // display sample records saved
     };
   }
 

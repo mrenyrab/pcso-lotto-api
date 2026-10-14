@@ -5,6 +5,8 @@ import { ScraperModule } from './scraper/scraper.module.js';
 import { StatsModule } from './stats/stats.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './interceptors/response.interceptor.js';
 
 @Module({
   imports: [
@@ -16,6 +18,12 @@ import { ScheduleModule } from '@nestjs/schedule';
     ScraperModule,
     StatsModule,
     ScheduleModule.forRoot(),
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useFactory: () => new ResponseInterceptor(),
+    },
   ],
 })
 export class AppModule {}
