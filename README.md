@@ -1,114 +1,344 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PCSO Lotto API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS API for retrieving PCSO lotto draws, syncing results, and analyzing historical draw statistics.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- Retrieve lotto draws by date
+- Scrape PCSO draw results
+- Backfill data by day, month, or year
+- Analyze number frequency and overdue numbers
+- View odd/even, pair, sum, and companion statistics
+- Generate random or statistically balanced number combinations
+- Store draws in MongoDB
+- Schedule automatic daily synchronization
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Supported Lotto Games
 
-## Project setup
+- 6/58
+- 6/55
+- 6/49
+- 6/45
+- 6/42
+
+## Requirements
+
+- Node.js 24 or newer
+- MongoDB
+- npm
+- Chromium/Puppeteer-compatible environment
+
+## Installation
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+## Environment Variables
 
-```bash
-# development
-$ npm run start
+Create a `.env` file in the project root:
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```env
+MONGODB_URI=mongodb://localhost:27017/pcso-lotto
+PCSO_URL=https://example.com/pcso-results
+PORT=3000
 ```
 
-## Run tests
+| Variable | Required | Description |
+|---|---:|---|
+| `MONGODB_URI` | Yes | MongoDB connection URI |
+| `PCSO_URL` | Yes | PCSO results page used by the scraper |
+| `PORT` | No | HTTP port; defaults to `3000` |
+
+## Running the API
 
 ```bash
-# unit tests
-$ npm run test
+# Development
+npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
+# Production build
+npm run build
+npm run start:prod
+```
 
-# test coverage
-$ npm run test:cov
+The API is available at `http://localhost:3000` by default.
+
+## Response Format
+
+Successful API responses use the following envelope:
+
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "action_at": "2026-11-19T11:58:51.876Z",
+  "data": {}
+}
+```
+
+## API Endpoints
+
+### Lotto
+
+#### Get draws by date
+
+```http
+GET /lotto/draw-date/:date
+```
+
+**Parameter**
+
+| Name | Example | Description |
+|---|---|---|
+| `date` | `2026-11-19` | Draw date in `YYYY-MM-DD` format |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/lotto/draw-date/2026-11-19"
+```
+
+The winners field is omitted from this response.
+
+### Statistics
+
+All statistics endpoints require one of these game values:
+
+- `6/58`
+- `6/55`
+- `6/49`
+- `6/45`
+- `6/42`
+
+#### Number frequency
+
+```http
+GET /stats/frequency/:game
+```
+
+**Query parameters**
+
+| Name | Type | Default | Description |
+|---|---|---:|---|
+| `limit` | integer | `10` | Number of hot and cold numbers to return |
+| `months` | integer | none | Limit analysis to the most recent number of months |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/frequency/6/49?limit=10&months=12"
+```
+
+#### Overdue numbers
+
+```http
+GET /stats/overdue/:game
+```
+
+**Query parameters**
+
+| Name | Type | Default |
+|---|---|---:|
+| `limit` | integer | `10` |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/overdue/6/58?limit=10"
+```
+
+#### Odd/even distribution
+
+```http
+GET /stats/odd-even/:game
+```
+
+**Query parameters**
+
+| Name | Type | Description |
+|---|---|---|
+| `from` | ISO date | Start date |
+| `to` | ISO date | End date |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/odd-even/6/45?from=2025-01-01&to=2026-11-19"
+```
+
+#### Number pairs
+
+```http
+GET /stats/pairs/:game
+```
+
+**Query parameters**
+
+| Name | Type | Default | Description |
+|---|---|---:|---|
+| `limit` | integer | `15` | Number of pairs |
+| `from` | ISO date | none | Start date |
+| `to` | ISO date | none | End date |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/pairs/6/42?limit=15"
+```
+
+#### Sum distribution
+
+```http
+GET /stats/sum-distribution/:game
+```
+
+**Query parameters**
+
+| Name | Type | Description |
+|---|---|---|
+| `from` | ISO date | Start date |
+| `to` | ISO date | End date |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/sum-distribution/6/49"
+```
+
+#### Companion numbers
+
+```http
+GET /stats/companions/:game/:ball
+```
+
+**Parameters**
+
+| Name | Example | Description |
+|---|---|---|
+| `game` | `6/55` | Lotto game |
+| `ball` | `21` | Target number |
+
+**Query parameters**
+
+| Name | Type | Default | Description |
+|---|---|---:|---|
+| `limit` | integer | `10` | Number of companion numbers |
+| `from` | ISO date | none | Start date |
+| `to` | ISO date | none | End date |
+
+**Example**
+
+```bash
+curl "http://localhost:3000/stats/companions/6/55/21?limit=10"
+```
+
+#### Generate number combinations
+
+```http
+GET /stats/generate/:game
+```
+
+**Query parameters**
+
+| Name | Type | Default | Values |
+|---|---|---:|---|
+| `limit` | integer | `3` | Number of combinations |
+| `type` | string | `smart` | `smart` or `random` |
+
+**Examples**
+
+```bash
+curl "http://localhost:3000/stats/generate/6/58?limit=3"
+curl "http://localhost:3000/stats/generate/6/58?limit=3&type=random"
+curl "http://localhost:3000/stats/generate/6/58?limit=3&type=smart"
+```
+
+Smart picks use historical frequency, game-specific sum ranges, odd/even distribution, and hot-number balance. Generated combinations are not predictions and do not improve the probability of winning.
+
+### Scraper
+
+#### Trigger daily synchronization
+
+```http
+POST /scraper/run
+```
+
+**Example**
+
+```bash
+curl -X POST "http://localhost:3000/scraper/run"
+```
+
+The endpoint starts a PCSO scrape and stores newly discovered or modified draws.
+
+#### Backfill draws
+
+```http
+POST /scraper/backfill
+```
+
+**Query parameters**
+
+| Name | Required | Example | Description |
+|---|---|---|---|
+| `year` | Yes | `2026` | Backfill a full year or combine with month/day |
+| `month` | Conditional | `january` | Month name |
+| `day` | Conditional | `19` | Day of the month |
+
+**Examples**
+
+```bash
+# Full year
+curl -X POST "http://localhost:3000/scraper/backfill?year=2026"
+
+# Entire month
+curl -X POST "http://localhost:3000/scraper/backfill?year=2026&month=january"
+
+# Specific day
+curl -X POST "http://localhost:3000/scraper/backfill?year=2026&month=january&day=19"
+```
+
+When `day` is supplied, both `month` and `year` are required. When `month` is supplied, `year` is required. Future dates are rejected.
+
+## Validation
+
+The API uses global NestJS validation:
+
+- Unknown query parameters are rejected
+- Numeric parameters must be positive integers where applicable
+- Invalid games return `400 Bad Request`
+- Invalid dates, months, days, and future scraper dates return `400 Bad Request`
+- Scraper configuration errors are returned as server errors
+
+## Automated Scraping
+
+The scraper has a scheduled task running daily at 9:45 PM in the Asia/Manila timezone. It scrapes the current Manila date and updates existing draws if their values have changed.
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Coverage
+npm run test:cov
+```
+
+## Linting and Formatting
+
+```bash
+npm run lint
+npm run format
 ```
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+The project includes a Vercel configuration. Deployment requires:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- `MONGODB_URI`
+- `PCSO_URL`
+- MongoDB network access from the deployment environment
+- A Puppeteer-compatible server runtime
