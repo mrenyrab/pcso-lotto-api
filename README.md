@@ -21,6 +21,8 @@ A NestJS API for retrieving PCSO lotto draws, syncing results, and analyzing his
 - 6/45
 - 6/42
 
+URL-encode the slash in a game value as `%2F` when using it in a path parameter.
+
 ## Requirements
 
 - Node.js 24 or newer
@@ -62,6 +64,22 @@ npm run start:prod
 ```
 
 The API is available at `http://localhost:3000` by default.
+
+## Swagger / OpenAPI
+
+The interactive API documentation is available at:
+
+```text
+http://localhost:3000/api/docs
+```
+
+The OpenAPI JSON document is available at:
+
+```text
+http://localhost:3000/api/docs-json
+```
+
+Swagger documents all lotto, statistics, and scraper endpoints. Replace `localhost:3000` with the deployed API host when using the production documentation.
 
 ## Response Format
 
@@ -126,7 +144,7 @@ GET /stats/frequency/:game
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/frequency/6/49?limit=10&months=12"
+curl "http://localhost:3000/stats/frequency/6%2F49?limit=10&months=12"
 ```
 
 #### Overdue numbers
@@ -144,7 +162,7 @@ GET /stats/overdue/:game
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/overdue/6/58?limit=10"
+curl "http://localhost:3000/stats/overdue/6%2F58?limit=10"
 ```
 
 #### Odd/even distribution
@@ -163,7 +181,7 @@ GET /stats/odd-even/:game
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/odd-even/6/45?from=2025-01-01&to=2026-11-19"
+curl "http://localhost:3000/stats/odd-even/6%2F45?from=2025-01-01&to=2026-11-19"
 ```
 
 #### Number pairs
@@ -183,7 +201,7 @@ GET /stats/pairs/:game
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/pairs/6/42?limit=15"
+curl "http://localhost:3000/stats/pairs/6%2F42?limit=15"
 ```
 
 #### Sum distribution
@@ -202,7 +220,7 @@ GET /stats/sum-distribution/:game
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/sum-distribution/6/49"
+curl "http://localhost:3000/stats/sum-distribution/6%2F49"
 ```
 
 #### Companion numbers
@@ -229,7 +247,7 @@ GET /stats/companions/:game/:ball
 **Example**
 
 ```bash
-curl "http://localhost:3000/stats/companions/6/55/21?limit=10"
+curl "http://localhost:3000/stats/companions/6%2F55/21?limit=10"
 ```
 
 #### Generate number combinations
@@ -248,9 +266,9 @@ GET /stats/generate/:game
 **Examples**
 
 ```bash
-curl "http://localhost:3000/stats/generate/6/58?limit=3"
-curl "http://localhost:3000/stats/generate/6/58?limit=3&type=random"
-curl "http://localhost:3000/stats/generate/6/58?limit=3&type=smart"
+curl "http://localhost:3000/stats/generate/6%2F58?limit=3"
+curl "http://localhost:3000/stats/generate/6%2F58?limit=3&type=random"
+curl "http://localhost:3000/stats/generate/6%2F58?limit=3&type=smart"
 ```
 
 Smart picks use historical frequency, game-specific sum ranges, odd/even distribution, and hot-number balance. Generated combinations are not predictions and do not improve the probability of winning.

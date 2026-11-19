@@ -1,12 +1,63 @@
 import { BadRequestException, Controller, Post, Query } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ScraperService } from './scraper.service.js';
 import { BackfillQueryDto } from './dto/backfill-query.dto.js';
+import { ApiResponseDto } from '../common/api-response.dto.js';
 
 @Controller('scraper')
+@ApiTags('Scraper')
 export class ScraperController {
   constructor(private readonly scraperService: ScraperService) {}
 
   @Post('backfill')
+  @ApiOperation({ summary: 'Backfill draws by year, month, or day' })
+  @ApiQuery({
+    name: 'year',
+    required: true,
+    type: Number,
+    minimum: 1,
+    example: 2026,
+  })
+  @ApiQuery({
+    name: 'month',
+    required: false,
+    enum: [
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ],
+  })
+  @ApiQuery({
+    name: 'day',
+    required: false,
+    type: Number,
+    minimum: 1,
+    maximum: 31,
+    description: 'Requires both month and year.',
+  })
+  @ApiCreatedResponse({
+    description:
+      'Backfill completed; returns counts of saved and modified draws.',
+    type: ApiResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Missing required date fields or invalid/future date.',
+  })
   async runBackfill(@Query() params: BackfillQueryDto) {
     if (params.day !== undefined) {
       if (params.month === undefined && params.year === undefined) {
@@ -34,7 +85,9 @@ export class ScraperController {
 
     if (params.month !== undefined) {
       if (params.year === undefined) {
-        throw new BadRequestException('Year is required when month is provided.');
+        throw new BadRequestException(
+          'Year is required when month is provided.',
+        );
       }
 
       return this.scraperService.runBackfillMonthYear(
@@ -51,6 +104,11 @@ export class ScraperController {
   }
 
   @Post('run')
+  @ApiOperation({ summary: 'Trigger a daily PCSO results synchronization' })
+  @ApiCreatedResponse({
+    description: 'Synchronization completed.',
+    type: ApiResponseDto,
+  })
   async triggerDailySync() {
     await this.scraperService.handleDailyScrape();
     return { message: 'Sync triggered successfully.' };

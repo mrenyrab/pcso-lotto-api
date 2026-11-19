@@ -10,8 +10,9 @@ export class LottoDraw {
   gameName: string; // e.g., "Ultra Lotto 6/58"
 
   @Prop({
+    type: String,
     required: true,
-    enum: GameType,
+    enum: Object.values(GameType),
   })
   type: GameType;
 
