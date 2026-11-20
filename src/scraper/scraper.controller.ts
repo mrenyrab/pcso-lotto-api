@@ -1,14 +1,23 @@
-import { BadRequestException, Controller, Post, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ScraperService } from './scraper.service.js';
 import { BackfillQueryDto } from './dto/backfill-query.dto.js';
 import { ApiResponseDto } from '../common/api-response.dto.js';
+import { CronTokenGuard } from './cron-token.guard.js';
 
 @Controller('scraper')
 @ApiTags('Scraper')
@@ -104,7 +113,12 @@ export class ScraperController {
   }
 
   @Post('run')
+  @UseGuards(CronTokenGuard)
+  @ApiBearerAuth('cron-token')
   @ApiOperation({ summary: 'Trigger a daily PCSO results synchronization' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid bearer token.',
+  })
   @ApiCreatedResponse({
     description: 'Synchronization completed.',
     type: ApiResponseDto,

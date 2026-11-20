@@ -43,6 +43,7 @@ Create a `.env` file in the project root:
 ```env
 MONGODB_URI=mongodb://localhost:27017/pcso-lotto
 PCSO_URL=https://example.com/pcso-results
+CRON_TRIGGER_TOKEN=replace-with-a-long-random-secret
 PORT=3000
 ```
 
@@ -50,7 +51,10 @@ PORT=3000
 |---|---:|---|
 | `MONGODB_URI` | Yes | MongoDB connection URI |
 | `PCSO_URL` | Yes | PCSO results page used by the scraper |
+| `CRON_TRIGGER_TOKEN` | Yes, for `POST /scraper/run` | Bearer token required to trigger the daily sync endpoint |
 | `PORT` | No | HTTP port; defaults to `3000` |
+
+Set the same `CRON_TRIGGER_TOKEN` as a secret in the scheduled workflow. Generate a strong value (for example, with `openssl rand -hex 32`) and do not commit it.
 
 ## Running the API
 
@@ -284,10 +288,12 @@ POST /scraper/run
 **Example**
 
 ```bash
-curl -X POST "http://localhost:3000/scraper/run"
+curl -X POST "http://localhost:3000/scraper/run" \
+  -H "Authorization: Bearer $CRON_TRIGGER_TOKEN"
 ```
 
-The endpoint starts a PCSO scrape and stores newly discovered or modified draws.
+The endpoint requires the `CRON_TRIGGER_TOKEN` bearer token, starts a PCSO
+scrape, and stores newly discovered or modified draws.
 
 #### Backfill draws
 

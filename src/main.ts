@@ -25,6 +25,7 @@ async function bootstrap() {
       'API for retrieving PCSO lotto draws, syncing results, and analyzing historical statistics.',
     )
     .setVersion('1.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'cron-token')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
