@@ -61,8 +61,8 @@ export type GameName = (typeof VALID_LOTTO_GAMES)[number];
 
 export const LOTTO_GAME_NAMES: Record<GameName, string> = {
   '6/42': 'Lotto 6/42',
-  '6/45': 'Mega Lotto 6/45',
-  '6/49': 'Super Lotto 6/49',
+  '6/45': 'Megalotto 6/45',
+  '6/49': 'Superlotto 6/49',
   '6/55': 'Grand Lotto 6/55',
   '6/58': 'Ultra Lotto 6/58',
 };

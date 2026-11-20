@@ -174,9 +174,6 @@
         "operationId": "ScraperController_triggerDailySync",
         "parameters": [],
         "responses": {
-          "401": {
-            "description": "Missing or invalid bearer token."
-          },
           "201": {
             "description": "Synchronization completed.",
             "content": {
@@ -186,6 +183,9 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token."
           }
         },
         "security": [
@@ -658,8 +658,9 @@
   "components": {
     "securitySchemes": {
       "cron-token": {
-        "type": "http",
-        "scheme": "bearer"
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
       }
     },
     "schemas": {
