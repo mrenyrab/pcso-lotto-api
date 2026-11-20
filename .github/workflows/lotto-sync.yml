@@ -1,0 +1,36 @@
+name: Daily Lotto Sync
+
+on:
+  schedule:
+    - cron: '45 13 * * *' # 9:45 PM Asia/Manila (UTC+8)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-lotto-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wake Render API
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 10 --retry-all-errors --retry-delay 10 --max-time 120 \
+            "$API_BASE_URL/api/docs-json" > /dev/null
+
+      - name: Trigger lotto sync
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          API_CRON_TOKEN: ${{ secrets.API_CRON_TOKEN }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --max-time 600 \
+            --request POST "$API_BASE_URL/scraper/run" \
+            --header "Authorization: Bearer $API_CRON_TOKEN"
