@@ -1,0 +1,693 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/lotto/draw-date/{date}": {
+      "get": {
+        "operationId": "LottoController_getDraw",
+        "parameters": [
+          {
+            "name": "date",
+            "required": true,
+            "in": "path",
+            "description": "Draw date in YYYY-MM-DD format",
+            "schema": {
+              "example": "2026-11-19",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draws for the requested date, including winner counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get lotto draws for a date",
+        "tags": [
+          "Lotto"
+        ]
+      }
+    },
+    "/lotto/draws/{game}": {
+      "get": {
+        "operationId": "LottoController_getDrawsForRange",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date",
+              "example": "2026-11-19",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "format": "date",
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching draws in the inclusive date range, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game, invalid date, or reversed date range."
+          }
+        },
+        "summary": "Get lotto draws for a game and date range",
+        "tags": [
+          "Lotto"
+        ]
+      }
+    },
+    "/scraper/backfill": {
+      "post": {
+        "operationId": "ScraperController_runBackfill",
+        "parameters": [
+          {
+            "name": "year",
+            "required": true,
+            "in": "query",
+            "description": "Year to backfill; required by the endpoint.",
+            "schema": {
+              "minimum": 1,
+              "example": 2026,
+              "type": "number"
+            }
+          },
+          {
+            "name": "month",
+            "required": false,
+            "in": "query",
+            "description": "Month to backfill. Requires year.",
+            "schema": {
+              "enum": [
+                "january",
+                "february",
+                "march",
+                "april",
+                "may",
+                "june",
+                "july",
+                "august",
+                "september",
+                "october",
+                "november",
+                "december"
+              ],
+              "type": "string",
+              "example": "january"
+            }
+          },
+          {
+            "name": "day",
+            "required": false,
+            "in": "query",
+            "description": "Requires both month and year.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 31,
+              "example": 19,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Backfill completed; returns counts of saved and modified draws.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required date fields or invalid/future date."
+          }
+        },
+        "summary": "Backfill draws by year, month, or day",
+        "tags": [
+          "Scraper"
+        ]
+      }
+    },
+    "/scraper/run": {
+      "post": {
+        "operationId": "ScraperController_triggerDailySync",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Synchronization completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Trigger a daily PCSO results synchronization",
+        "tags": [
+          "Scraper"
+        ]
+      }
+    },
+    "/stats/frequency/{game}": {
+      "get": {
+        "operationId": "StatsController_getFrequency",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "months",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get hot and cold number frequencies",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/overdue/{game}": {
+      "get": {
+        "operationId": "StatsController_getOverdueNumbers",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get the most overdue numbers",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/odd-even/{game}": {
+      "get": {
+        "operationId": "StatsController_getOddEven",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get historical odd/even draw distribution",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/pairs/{game}": {
+      "get": {
+        "operationId": "StatsController_getPairs",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 15,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get the most frequently co-occurring number pairs",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/sum-distribution/{game}": {
+      "get": {
+        "operationId": "StatsController_getSumDistribution",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get draw sum distribution",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/companions/{game}/{ball}": {
+      "get": {
+        "operationId": "StatsController_getCompanions",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "ball",
+            "required": true,
+            "in": "path",
+            "description": "Target number.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Get numbers most often drawn with a target number",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    },
+    "/stats/generate/{game}": {
+      "get": {
+        "operationId": "StatsController_generateNumbers",
+        "parameters": [
+          {
+            "name": "game",
+            "required": true,
+            "in": "path",
+            "description": "URL-encode the slash in the game value, for example 6%2F58.",
+            "schema": {
+              "enum": [
+                "6/42",
+                "6/45",
+                "6/49",
+                "6/55",
+                "6/58"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "smart",
+                "random"
+              ],
+              "type": "string",
+              "default": "smart"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 3,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported lotto game or invalid query."
+          }
+        },
+        "summary": "Generate number combinations",
+        "tags": [
+          "Statistics"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "PCSO Lotto API",
+    "description": "API for retrieving PCSO lotto draws, syncing results, and analyzing historical statistics.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "ApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "number",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "Success"
+          },
+          "action_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "description": "Endpoint-specific response payload.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "action_at",
+          "data"
+        ]
+      }
+    }
+  }
+}

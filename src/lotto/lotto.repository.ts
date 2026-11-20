@@ -79,29 +79,24 @@ export class LottoRepository {
     ]);
   }
 
-  /**
-   * Find draws by game and optional date range
-   */
-  async findByGame(
+  async findByGameAndDateRange(
     gameName: string,
-    from?: Date,
-    to?: Date,
-  ): Promise<LottoDraw[]> {
-    const filter: Record<string, any> = { gameName: new RegExp(gameName, 'i') };
-
-    if (from || to) {
-      filter.drawDate = {};
-      if (from) filter.drawDate.$gte = from;
-      if (to) filter.drawDate.$lte = to;
-    }
-
-    return this.lottoModel.find(filter).sort({ drawDate: -1 }).exec();
+    from: Date,
+    toExclusive: Date,
+  ): Promise<LottoDrawDocument[]> {
+    return this.lottoModel
+      .find({
+        gameName,
+        drawDate: { $gte: from, $lt: toExclusive },
+      })
+      .sort({ drawDate: -1 })
+      .exec();
   }
 
   /**
    * Find draws by a specific date
    */
-  async findByDate(date: string) {
+  async findByDate(date: string): Promise<LottoDrawDocument[]> {
     const start = new Date(`${date}T00:00:00.000Z`);
     const end = new Date(`${date}T23:59:59.999Z`);
 
